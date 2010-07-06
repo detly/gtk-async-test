@@ -30,11 +30,28 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import threading
 
 import gobject
-import glib
+import gtk.gdk
+
+MAGIC_DELAY = 1
+STEPS = 5
+
+def do_long_processing(progress_callback, final_callback):
+    """ Do some long operation, eg. waiting on a serial port response, or
+    reticulating splines from file data.
+    """
+    import time
+    for num in xrange(1, STEPS + 1):
+        time.sleep(MAGIC_DELAY)
+        if progress_callback:
+            progress_callback(float(num)/STEPS)
+
+    final_callback(42)
 
 class MyModel(gobject.GObject):
-    
+
     __gproperties__ = {
+        # This could actually be a signal itself, but there could be less
+        # trivial examples
         'progress'  :   (gobject.TYPE_FLOAT,
                          "progress of operation",
                          "progress of operation",
@@ -42,12 +59,12 @@ class MyModel(gobject.GObject):
                          0.0,
                          gobject.PARAM_READABLE)
     }
-    
+
     __gsignals__ = {
         'operation-started' :   (gobject.SIGNAL_RUN_LAST,
                                  gobject.TYPE_NONE,
                                  ()),
-                                 
+
         'operation-complete':   (gobject.SIGNAL_RUN_LAST,
                                  gobject.TYPE_NONE,
                                  (gobject.TYPE_INT,))
@@ -56,28 +73,32 @@ class MyModel(gobject.GObject):
     def __init__(self):
         self.progress = 0.0
         super(MyModel, self).__init__()
-    
-    def do_set_properties(self, prop, val):
+
+    def do_set_property(self, prop, val):
         raise AttributeError("Cannot set property: %s" % prop.name)
 
-    def do_get_properties(self, prop, val):
+    def do_get_property(self, prop):
         if prop.name == 'progress':
             return self.progress
-        
+
         raise AttributeError("Cannot read property: %s" % prop.name)
 
     def update_progress(self, newvalue):
         self.progress = min(max(newvalue, 0.0), 1.0)
-        self.notify('progress')
+        with gtk.gdk.lock:
+            self.notify('progress')
 
-    def start_operation(self):
+    def start_operation(self, source):
         self.emit('operation-started')
         worker = threading.Thread(
                     target=do_long_processing,
-                    args=self.operation_complete)
+                    args=(
+                            self.update_progress,
+                            self.operation_complete))
         worker.start()
-        
+
     def operation_complete(self, result):
-        self.emit('operation-complete', result)
+        with gtk.gdk.lock:
+            self.emit('operation-complete', result)
 
 gobject.type_register(MyModel)
