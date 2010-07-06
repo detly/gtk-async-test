@@ -29,6 +29,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from model import MyModel
 from view import MyView, LaunchUI
+import gtk
 
 class MyController(object):
 
@@ -39,8 +40,11 @@ class MyController(object):
         model.connect('notify::progress', view.on_progress_notify)
 
 if __name__ == "__main__":
+    gtk.gdk.threads_init()
+
     view = MyView()
     model = MyModel()
     controller = MyController(model, view)
 
-    LaunchUI(view)
+    with gtk.gdk.lock:
+        LaunchUI(view)

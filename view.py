@@ -27,10 +27,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import pygtk
 import gtk
-import gtk.gdk
-import glib
 
 class MyView(gtk.VBox):
 
@@ -80,9 +77,6 @@ def LaunchUI(view):
     window.connect('destroy', destroy)
 
     window.set_title("GTK async test")
-
-    glib.threads_init()
-    # gtk.gdk.threads_init()
 
     window.show_all()
     gtk.main()

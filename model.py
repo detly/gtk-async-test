@@ -29,8 +29,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import threading
 
-import gobject
-import glib
+import gobject, gtk
 
 MAGIC_DELAY = 1
 STEPS = 5
@@ -43,6 +42,7 @@ def do_long_processing(progress_callback, final_callback):
     for num in xrange(1, STEPS + 1):
         time.sleep(MAGIC_DELAY)
         if progress_callback:
+            print '>>> progress:', float(num)/STEPS
             progress_callback(float(num)/STEPS)
 
     final_callback(42)
@@ -71,8 +71,8 @@ class MyModel(gobject.GObject):
     }
 
     def __init__(self):
+        gobject.GObject.__init__(self)
         self.progress = 0.0
-        super(MyModel, self).__init__()
 
     def do_set_property(self, prop, val):
         raise AttributeError("Cannot set property: %s" % prop.name)
@@ -84,8 +84,12 @@ class MyModel(gobject.GObject):
         raise AttributeError("Cannot read property: %s" % prop.name)
 
     def update_progress(self, newvalue):
-        self.progress = min(max(newvalue, 0.0), 1.0)
-        glib.idle_add(self.notify, 'progress')
+        def idle():
+            with gtk.gdk.lock:
+                self.progress = min(max(newvalue, 0.0), 1.0)
+                self.notify('progress')
+                return False
+        gobject.idle_add(idle)
 
     def start_operation(self, source):
         self.emit('operation-started')
@@ -97,7 +101,10 @@ class MyModel(gobject.GObject):
         worker.start()
 
     def operation_complete(self, result):
-        #with gtk.gdk.lock:
-        glib.idle_add(self.emit, 'operation-complete', result)
+        def idle():
+            with gtk.gdk.lock:
+                self.emit('operation-complete', result)
+                return False
+        gobject.idle_add(idle)
 
 gobject.type_register(MyModel)
