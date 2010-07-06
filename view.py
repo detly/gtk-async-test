@@ -82,7 +82,7 @@ def LaunchUI(view):
     window.set_title("GTK async test")
 
     glib.threads_init()
-    gtk.gdk.threads_init()
+    # gtk.gdk.threads_init()
 
     window.show_all()
     gtk.main()

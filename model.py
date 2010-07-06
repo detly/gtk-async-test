@@ -30,7 +30,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import threading
 
 import gobject
-import gtk.gdk
+import glib
 
 MAGIC_DELAY = 1
 STEPS = 5
@@ -85,8 +85,7 @@ class MyModel(gobject.GObject):
 
     def update_progress(self, newvalue):
         self.progress = min(max(newvalue, 0.0), 1.0)
-        with gtk.gdk.lock:
-            self.notify('progress')
+        glib.idle_add(self.notify, 'progress')
 
     def start_operation(self, source):
         self.emit('operation-started')
@@ -98,7 +97,7 @@ class MyModel(gobject.GObject):
         worker.start()
 
     def operation_complete(self, result):
-        with gtk.gdk.lock:
-            self.emit('operation-complete', result)
+        #with gtk.gdk.lock:
+        glib.idle_add(self.emit, 'operation-complete', result)
 
 gobject.type_register(MyModel)
