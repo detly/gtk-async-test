@@ -32,12 +32,12 @@ import threading
 import gobject
 import glib
 
-MAGIC_DELAY = 1
-STEPS = 5
+MAGIC_DELAY = 0.05
+STEPS = 100
 
 def do_long_processing(progress_callback, final_callback):
-    """ Do some long operation, eg. waiting on a serial port response, or
-    reticulating splines from file data.
+    """ Do some long operation, eg. waiting for a file to be analysed, time
+    consuming mathematics...
     """
     import time
     for num in xrange(1, STEPS + 1):
