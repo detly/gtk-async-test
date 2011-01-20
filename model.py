@@ -85,6 +85,9 @@ class MyModel(gobject.GObject):
 
     def update_progress(self, newvalue):
         self.progress = min(max(newvalue, 0.0), 1.0)
+        # This might even need a "with gtk.gdk.lock:" around it. I've
+        # experienced intermittent crashes with similar programs in the past,
+        # solved by locking these calls. Then again, nothing is breaking here...
         glib.idle_add(self.notify, 'progress')
 
     def start_operation(self, source):
@@ -97,7 +100,7 @@ class MyModel(gobject.GObject):
         worker.start()
 
     def operation_complete(self, result):
-        #with gtk.gdk.lock:
+        # See note above re. locking
         glib.idle_add(self.emit, 'operation-complete', result)
 
 gobject.type_register(MyModel)

@@ -74,15 +74,18 @@ def destroy(widget, data=None):
     gtk.main_quit()
 
 def LaunchUI(view):
+    
     window = gtk.Window()
     window.add(view)
 
     window.connect('destroy', destroy)
 
     window.set_title("GTK async test")
-
-    # gtk.gdk.threads_init()
-    glib.threads_init()
-
+    
     window.show_all()
-    gtk.main()
+    
+    gtk.gdk.threads_init()
+    glib.threads_init()
+    
+    with gtk.gdk.lock:
+        gtk.main()
